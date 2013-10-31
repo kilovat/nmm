@@ -1,0 +1,396 @@
+<form method="POST" style="position: absolute;left: -250px;margin-left: 50%; width: 520px; border: 2px solid #424242;border-radius: 5px;"  >
+	<input type="text" name="a" style="width: 500px; margin: 10px; float: top;" >
+	<input type="text" name="b" style="width: 500px; margin: 10px; float: top;" >
+	<input type="text" name="c" style="width: 500px; margin: 10px; float: top;" >
+	<input type="submit" value="Посчитать" name="submit" style="width: 500px; margin: 10px; float: top;" >
+</form>
+<?php
+
+function get2cc ( $st, $accuracy = 10 ) {
+	
+	preg_match ( "/(.*?)[\,\.](.*)/", $st, $a );
+	
+	if ( empty ( $a ) )
+		return decbin ( $st );
+    
+	$result = decbin ( $a [ 1 ] ) . ".";
+    
+	$f_num = ( float ) ( "0." . $a [ 2 ] );
+    
+	for ( $i = 0; $i < $accuracy; $i++ ) {
+	
+		preg_match ( "/([0-9])[\,\.]([0-9]*)/", $f_num * 2, $a );
+    
+		if ( empty ( $a ) )
+			return $result . "1";
+        
+		$result .= $a [ 1 ];
+        
+		$f_num = ( float ) ( "0." . $a [ 2 ] );
+		
+    }
+	
+    return $result;
+	
+}
+
+function forArray ( $Arr ) {
+
+	$needArr = Array ();
+
+	foreach ( $Arr as $val )
+		$needArr [] = get2cc ( $val );
+		
+	return $needArr;
+
+}
+
+function compareArray ( $a1, $a2 ) {
+
+//  if $a1 > $a2 return 1;		if $a1 < $a2 return -1;		if $a1 == $a2 return 0;
+
+	$a1 = preg_replace ( "/^0*/i", "", $a1 );
+	
+	$a2 = preg_replace ( "/^0*/i", "", $a2 );
+
+	$m1 = explode ( "." , $a1 );
+	
+	$m2 = explode ( "." , $a2 );
+	
+	if ( strlen ( $m1 [ 0 ] ) > strlen ( $m2 [ 0 ] ) )
+		return 1;
+		
+	elseif ( strlen ( $m1 [ 0 ] ) < strlen ( $m2 [ 0 ] ) )
+		return -1;
+		
+	elseif ( $a1 === $a2 )
+		return 0;
+		
+	$len = strlen ( $m1 [ 0 ] );
+		
+	for ( $i = 0; $i < $len; $i++ )
+		if ( $m1 [ 0 ] [ $i ] == "1" && $m2 [ 0 ] [ $i ] == "0" )
+			return 1;
+		
+		elseif ( $m1 [ 0 ] [ $i ] == "0" && $m2 [ 0 ] [ $i ] == "1" )
+			return -1;
+
+	
+	$fl = (
+	
+		( $lenM2 = empty ( $m2 [ 1 ] ) ? 0 : strlen ( $m2 [ 1 ] ) ) > ( $lenM1 = empty ( $m1 [ 1 ] ) ? 0 : strlen ( $m1 [ 1 ] ) )
+
+	);
+	
+	$differenceLenM = $fl ? ( $lenM2 - $lenM1 ) : ( $lenM1 - $lenM2 );
+	
+	$maxLen = $fl ? $lenM2 : $lenM1;
+	
+	if ( $fl )
+		$linkToMin = &$m1 [ 1 ];
+	else
+		$linkToMin = &$m2 [ 1 ];
+	
+	for ( $i = 0; $i < $differenceLenM; $i++ )
+		$linkToMin .= "0";
+				
+	for ( $i = 0; $i < $maxLen; $i++ )
+		if ( $m1 [ 1 ] [ $i ] == "1" && $m2 [ 1 ] [ $i ] == "0" )
+			return 1;
+		
+		elseif ( $m1 [ 1 ] [ $i ] == "0" && $m2 [ 1 ] [ $i ] == "1" )
+			return -1;
+			
+	return 0;
+	
+}
+
+function max2cc ( &$a ) {
+
+	$max = end ( $a );
+	
+	foreach ( $a as $val )
+		( compareArray ( $val , $max ) == 1 ) &&
+		( $max = $val );
+		
+	return $max;
+		
+}
+
+function min2cc ( &$a ) {
+
+	$min = end ( $a );
+	
+	foreach ( $a as $val )
+		( compareArray ( $val , $max ) == -1 ) &&
+		( $min = $val );
+
+	return $min;
+		
+}
+
+function need2kvest ( $a, $_2cc = false ) {
+
+	if ( $_2cc === false ) {
+	
+		$temp = $a;
+		
+		$result = Array ();
+		
+		
+		$mod = ( $_tmp = count ( $a ) ) % 2;
+		
+		$len = round ( $_tmp / 2 , PHP_ROUND_HALF_UP );
+		
+		for ( $i = 0; $i < $len; $i++ ) {
+		
+			$max = max ( $temp );
+			
+			unset ( $temp [ array_search ( $max, $temp ) ] );
+			
+			$result [] = $max;
+			
+			if ( $i < ( $_tmp = $len - 1 ) || $mod == 0 ) {
+			
+				$min = min ( $temp );
+				
+				unset ( $temp [ array_search ( $min, $temp ) ] );
+				
+				$result [] = $min;
+				
+			}
+			
+		}
+		
+		return $result;
+		
+	} else {
+	
+		$temp = $a;
+		
+		$result = Array ();
+		
+		
+		$mod = ( $_tmp = count ( $a ) ) % 2;
+		
+		$len = round ( $_tmp / 2 , PHP_ROUND_HALF_UP );
+
+		for ( $i = 0; $i < $len; $i++ ) {
+		
+			$max = max2cc ( $temp );
+			
+			unset ( $temp [ array_search ( $max , $temp ) ] );
+			
+			$result [] = $max;
+			
+			if ( $i < ( $_tmp = $len - 1 ) || $mod == 0 ) {
+			
+				$min = min2cc ( $temp );
+				
+				unset ( $temp [ array_search ( $min , $temp ) ] );
+				
+				$result [] = $min;
+				
+			}
+			
+		}
+		
+		return $result;
+		
+	}
+	
+}
+
+function need3kvest ( $a ) {
+
+	if ( ( $len = count ( $a ) ) < 4 )
+		return $a;
+		
+	$tmp = Array (
+	
+		1 => ( Object ) Array (
+		
+			"id"	=> Null ,
+			
+			"val"	=> Null
+		
+		) ,  
+	
+		2 => ( Object ) Array (
+		
+			"id"	=> Null ,
+			
+			"val"	=> Null
+		
+		) , 
+ 	
+		3 => ( Object ) Array (
+		
+			"id"	=> Null ,
+			
+			"val"	=> Null
+		
+		) , 
+ 	
+		4 => ( Object ) Array (
+		
+			"id"	=> Null ,
+			
+			"val"	=> Null
+		
+		)
+		
+	);
+	
+	$mod = 1;
+	
+	foreach ( $a as $index => $val ) {
+	
+		$tmp [ $mod ] -> id  = $index;
+		
+		$tmp [ $mod ] -> val = $val;
+		
+		$mod++;
+		
+		if ( $mod > 4 ) {
+		
+			$a [ $tmp [ 1 ] -> id ] = $tmp [ 3 ] -> val;
+		
+			$a [ $tmp [ 2 ] -> id ] = $tmp [ 4 ] -> val;
+		
+			$a [ $tmp [ 3 ] -> id ] = $tmp [ 1 ] -> val;
+		
+			$a [ $tmp [ 4 ] -> id ] = $tmp [ 2 ] -> val;
+		
+			$mod = 1;
+			
+		}
+	
+	}
+	
+	return $a;
+
+}
+
+$data = ( object ) Array (
+	
+	"_10cc" => ( object ) Array (
+
+		"a" => @ explode ( ";" , @ str_replace ( " " , "" , @ trim ( preg_replace ( "/\;$/" , "" , $_POST [ "a" ] ) ) ) ),
+
+		"b" => @ explode ( ";" , @ str_replace ( " " , "" , @ trim ( preg_replace ( "/\;$/" , "" , $_POST [ "b" ] ) ) ) ),
+
+		"c" => @ explode ( ";" , @ str_replace ( " " , "" , @ trim ( preg_replace ( "/\;$/" , "" , $_POST [ "c" ] ) ) ) )
+
+	),
+	
+	"_2cc" => ( object ) Array (
+
+		"a" => Null,
+
+		"b" => Null,
+
+		"c" => Null
+
+	)
+
+);
+
+$data -> _2cc -> a = forArray ( $data -> _10cc -> a );
+
+$data -> _2cc -> b = forArray ( $data -> _10cc -> b );
+
+$data -> _2cc -> c = forArray ( $data -> _10cc -> c );
+
+
+
+
+/*		1-е		*/
+
+$data -> _10cc -> a = array_reverse ( $data -> _10cc -> a );
+
+
+$data -> _2cc -> a = array_reverse ( $data -> _2cc -> a );
+
+/* - - - - - - - */
+
+
+/*		2-e		*/
+
+$data -> _10cc -> b = need2kvest ( $data -> _10cc -> b );
+
+
+$data -> _2cc -> b = need2kvest ( $data -> _2cc -> b , true );
+
+/*-------------*/
+
+
+/*		3-e		*/
+
+$data -> _10cc -> c = need3kvest ( $data -> _10cc -> c );
+
+
+$data -> _2cc -> c = need3kvest ( $data -> _2cc -> c , true );
+
+/*-------------*/
+
+
+
+?>
+<div style="position: absolute;top: 200px;left: -250px;margin-left: 50%; width: 520px; border: 2px solid #424242;border-radius: 5px;" >
+
+	<div>
+
+		<table border = "2px" style ="display: block; margin: 10px;" >
+		
+			<tr style ="width: 100%;" >
+				<td>10CC:</td>
+				<td style ="width: 100%;" ><?php foreach ( $data -> _10cc -> a as $val ) echo $val . "; "; ?></td>
+			</tr>
+			
+			<tr style ="width: 100%;" >
+				<td>2CC:</td>
+				<td style ="width: 100%;" ><?php foreach ( $data -> _2cc -> a as $val ) echo $val . "; "; ?></td>
+			</tr>
+			
+		</table>
+		
+	</div>	
+
+	<div>
+
+		<table border = "2px" style ="display: block; margin: 10px;" >
+		
+			<tr style ="width: 100%;" >
+				<td>10CC:</td>
+				<td style ="width: 100%;" ><?php foreach ( $data -> _10cc -> b as $val ) echo $val . "; "; ?></td>
+			</tr>
+			
+			<tr style ="width: 100%;" >
+				<td>2CC:</td>
+				<td style ="width: 100%;" ><?php foreach ( $data -> _2cc -> b as $val ) echo $val . "; "; ?></td>
+			</tr>
+			
+		</table>
+		
+	</div>	
+
+	<div>
+
+		<table border = "2px" style ="display: block; margin: 10px;" >
+		
+			<tr style ="width: 100%;" >
+				<td>10CC:</td>
+				<td style ="width: 100%;" ><?php foreach ( $data -> _10cc -> c as $val ) echo $val . "; "; ?></td>
+			</tr>
+			
+			<tr style ="width: 100%;" >
+				<td>2CC:</td>
+				<td style ="width: 100%;" ><?php foreach ( $data -> _2cc -> c as $val ) echo $val . "; "; ?></td>
+			</tr>
+			
+		</table>
+		
+	</div>	
+
+</div>
